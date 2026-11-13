@@ -12,10 +12,13 @@ namespace lora
         double latitude = 0.0;
         double longitude = 0.0;
         bool gpsFixValid = false;
-        bool valid = false; // true if the last parse succeeded
-        int rssi = 0;       // signal strength of last received packet
+        bool valid = false;
+        int rssi = 0;
         bool is_danger = false;
         unsigned long lastReceivedMillis = 0;
+
+        // MAC address (XX:XX:XX:XX:XX:XX)
+        char macAddress[18] = {};
     };
 
     // Counters useful for debugging range / interference / attacks.
