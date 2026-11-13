@@ -5,6 +5,8 @@ namespace pages
     enum class PageId
     {
         LANDING,
-        MENU
+        MENU,
+        LIVE_MONITORING,
+        TEMPLATE
     };
 }
