@@ -3,6 +3,8 @@
 #include "sensor_manager.h"
 #include "pages/landing_page.h"
 #include "pages/menu_page.h"
+#include "pages/live_monitoring_page.h"
+#include "pages/template_page.h"
 
 namespace
 {
@@ -16,16 +18,15 @@ namespace
         {
         case pages::PageId::LANDING:
             return &pages::landing_page;
-            break;
 
         case pages::PageId::MENU:
-            /* code */
             return &pages::menu_page;
-            break;
 
-        default:
-            return &pages::landing_page;
-            break;
+        case pages::PageId::LIVE_MONITORING:
+            return &pages::live_monitoring_page;
+
+        case pages::PageId::TEMPLATE:
+            return &pages::template_page;
         }
         return &pages::landing_page;
     }
@@ -39,6 +40,7 @@ namespace page_manager
 
         navigateTo(pages::PageId::LANDING);
     }
+
     void update()
     {
         if (current_page == nullptr || display_ptr == nullptr)
@@ -54,12 +56,13 @@ namespace page_manager
 
         current_page->update(*display_ptr, delta, button_pressed);
     }
+
     void navigateTo(pages::PageId id)
     {
         if (current_page != nullptr)
         {
             current_page->onExit();
-        } 
+        }
 
         sensor_manager::setEncoderPosition(0);
         last_encoder_position = 0;
