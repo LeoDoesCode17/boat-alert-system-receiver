@@ -11,6 +11,10 @@ namespace pages
         void update(Adafruit_SSD1306 &display, long encoder_delta, bool button_pressed) override;
 
     private:
+        void draw(Adafruit_SSD1306 &display);
+
+        // Not reset in onEnter(), so returning from a sub-page keeps the
+        // carousel on the item you just came from.
         int _selectedIndex = 0;
     };
 
