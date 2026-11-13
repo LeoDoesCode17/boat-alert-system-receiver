@@ -6,6 +6,7 @@
 #include "managers/page_manager.h"
 #include "managers/sensor_manager.h"
 #include "managers/network_manager.h"
+#include "security/aes.h"
 
 // ---- Display geometry ----
 #define SCREEN_WIDTH 128
@@ -51,6 +52,11 @@ void setup()
     {
       delay(10);
     }
+  }
+
+  if (!aes::initialize())
+  {
+    Serial.println(F("[AES] Init failed - encrypted TX will not work."));
   }
 
   sensor_manager::initialize();
