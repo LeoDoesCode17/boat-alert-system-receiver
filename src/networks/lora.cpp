@@ -47,7 +47,8 @@ namespace lora
             F_LON = 1 << 4,
             F_FIX = 1 << 5,
             F_DANGER = 1 << 6,
-            F_ALL = 0x7F
+            F_MAC = 1 << 7,
+            F_ALL = 0xFF
         };
 
         TelemetryPacket latest;
@@ -92,7 +93,35 @@ namespace lora
             return s;
         }
 
-        // Parses "R:2.13,P:-1.05,Y:184.30,LAT:-5.123456,LON:120.123456,FIX:1,S:1"
+        bool parseMacAddress(const char *value, char *output)
+        {
+            // MAC address must contain exactly 17 characters.
+            if (strlen(value) != 17)
+                return false;
+
+            for (int i = 0; i < 17; i++)
+            {
+                if ((i + 1) % 3 == 0)
+                {
+                    // Positions 2, 5, 8, 11, 14 must be ':'.
+                    if (value[i] != ':')
+                        return false;
+                }
+                else
+                {
+                    // Other positions must contain hexadecimal characters.
+                    if (!isxdigit((unsigned char)value[i]))
+                        return false;
+                }
+            }
+
+            memcpy(output, value, 17);
+            output[17] = '\0';
+
+            return true;
+        }
+
+        // Parses "R:2.13,P:-1.05,Y:184.30,LAT:-5.123456,LON:120.123456,FIX:1,S:1,MAC:FF:FF:FF:FF:FF:FF"
         // Modifies `text` in place (no heap allocation).
         bool parsePayload(char *text, TelemetryPacket &out)
         {
@@ -143,6 +172,13 @@ namespace lora
                 {
                     out.is_danger = (atoi(val) == 1);
                     seen |= F_DANGER;
+                }
+                else if (!strcmp(key, "MAC"))
+                {
+                    if (!parseMacAddress(val, out.macAddress))
+                        return false;
+
+                    seen |= F_MAC;
                 }
             }
 
@@ -222,10 +258,16 @@ namespace lora
         stats.received++;
 
         Serial.printf(
-            "[LORA] R:%.2f P:%.2f Y:%.2f LAT:%.6f LON:%.6f FIX:%d S:%d RSSI:%d\n",
-            latest.roll, latest.pitch, latest.yaw,
-            latest.latitude, latest.longitude,
-            latest.gpsFixValid, latest.is_danger, latest.rssi);
+            "[LORA] R:%.2f P:%.2f Y:%.2f LAT:%.6f LON:%.6f FIX:%d S:%d MAC:%s RSSI:%d\n",
+            latest.roll,
+            latest.pitch,
+            latest.yaw,
+            latest.latitude,
+            latest.longitude,
+            latest.gpsFixValid,
+            latest.is_danger,
+            latest.macAddress,
+            latest.rssi);
 
         return true;
     }
