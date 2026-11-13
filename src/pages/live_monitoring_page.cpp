@@ -11,7 +11,7 @@ namespace pages
 
     namespace
     {
-        constexpr int16_t ROW_HEIGHT = 9;
+        constexpr int16_t ROW_HEIGHT = 8;
         constexpr int16_t ROW_START = widgets::CONTENT_TOP;
     }
 
@@ -89,6 +89,13 @@ namespace pages
             y += ROW_HEIGHT;
 
             snprintf(line, sizeof(line), "LON:%.6f", pkt.longitude);
+            display.setCursor(0, y);
+            display.print(line);
+            y += ROW_HEIGHT;
+
+            snprintf(line, sizeof(line), "MAC:%.17s",
+                     pkt.macAddress[0] ? pkt.macAddress : "--");
+
             display.setCursor(0, y);
             display.print(line);
             y += ROW_HEIGHT;
