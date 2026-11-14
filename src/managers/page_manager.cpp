@@ -5,6 +5,8 @@
 #include "pages/menu_page.h"
 #include "pages/live_monitoring_page.h"
 #include "pages/template_page.h"
+#include "pages/configuration_mode_page.h"
+#include "pages/network_configuration_page.h"
 
 namespace
 {
@@ -27,6 +29,12 @@ namespace
 
         case pages::PageId::TEMPLATE:
             return &pages::template_page;
+
+        case pages::PageId::NETWORK_CONFIGURATION:
+            return &pages::network_configuration_page;
+
+        case pages::PageId::CONFIGURATION_MODE:
+            return &pages::configuration_mode_page;
         }
         return &pages::landing_page;
     }
