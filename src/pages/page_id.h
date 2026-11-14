@@ -7,6 +7,8 @@ namespace pages
         LANDING,
         MENU,
         LIVE_MONITORING,
-        TEMPLATE
+        TEMPLATE,
+        NETWORK_CONFIGURATION,
+        CONFIGURATION_MODE,
     };
 }

@@ -21,6 +21,7 @@ namespace pages
         constexpr MenuItem ITEMS[] = {
             {"LIVE", "MONITOR", PageId::LIVE_MONITORING},
             {"TEMPLATE", nullptr, PageId::TEMPLATE},
+            {"NETWORK", "CONFIG", PageId::NETWORK_CONFIGURATION},
         };
         constexpr int ITEM_COUNT = sizeof(ITEMS) / sizeof(ITEMS[0]);
 
