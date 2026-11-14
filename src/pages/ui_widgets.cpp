@@ -1,4 +1,5 @@
 #include "ui_widgets.h"
+#include <string.h>
 
 namespace pages
 {
@@ -24,14 +25,22 @@ namespace pages
             display.drawFastHLine(0, 9, display.width(), SSD1306_WHITE);
         }
 
-        void drawBackButton(Adafruit_SSD1306 &display)
+        void drawButton(Adafruit_SSD1306 &display, const char *label)
         {
-            display.fillRect(0, BACK_BUTTON_Y, 42, 9, SSD1306_WHITE);
+            // 6px per character at text size 1, plus 3px padding on each side.
+            const int16_t w = (int16_t)strlen(label) * 6 + 6;
+
+            display.fillRect(0, BACK_BUTTON_Y, w, 9, SSD1306_WHITE);
             display.setTextSize(1);
             display.setTextColor(SSD1306_BLACK);
-            display.setCursor(4, BACK_BUTTON_Y + 1);
-            display.print(F("< BACK"));
+            display.setCursor(3, BACK_BUTTON_Y + 1);
+            display.print(label);
             display.setTextColor(SSD1306_WHITE);
+        }
+
+        void drawBackButton(Adafruit_SSD1306 &display)
+        {
+            drawButton(display, "< BACK");
         }
 
         void drawCentered(Adafruit_SSD1306 &display, const char *text, int16_t x, int16_t w, int16_t y)
