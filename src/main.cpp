@@ -16,8 +16,6 @@
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-unsigned long lastUpdate = 0;
-
 void scanI2C()
 {
   Serial.println(F("Scanning I2C bus..."));
@@ -74,10 +72,7 @@ void setup()
 
 void loop()
 {
-  if (millis() - lastUpdate >= 10)
-  {
-    lastUpdate = millis();
-    network_manager::update(); // <-- was lora_manager::update()
-    page_manager::update();
-  }
+  network_manager::update(); // <-- was lora_manager::update()
+  network_manager::update_ap(); // update access point (when esp32 in access point mode)
+  page_manager::update();
 }
