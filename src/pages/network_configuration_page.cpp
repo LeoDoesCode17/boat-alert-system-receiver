@@ -60,7 +60,7 @@ namespace pages
                 break;
 
             case Action::Back:
-                page_manager::navigateTo(PageId::MENU); // Return to the menu
+                page_manager::navigateTo(PageId::SETTING); // Return to the menu
                 break;
 
             case Action::None: // Selection is on an info line (SSID, host...): nothing to do
