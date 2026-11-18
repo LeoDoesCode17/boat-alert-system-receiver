@@ -20,8 +20,7 @@ namespace pages
         // Add new menu entries here; the carousel and dots adapt automatically.
         constexpr MenuItem ITEMS[] = {
             {"LIVE", "MONITOR", PageId::LIVE_MONITORING},
-            {"TEMPLATE", nullptr, PageId::TEMPLATE},
-            {"NETWORK", "CONFIG", PageId::NETWORK_CONFIGURATION},
+            {"SETTING", nullptr, PageId::SETTING},
         };
         constexpr int ITEM_COUNT = sizeof(ITEMS) / sizeof(ITEMS[0]);
 
