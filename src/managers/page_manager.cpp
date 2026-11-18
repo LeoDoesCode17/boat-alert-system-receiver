@@ -7,6 +7,8 @@
 #include "pages/template_page.h"
 #include "pages/configuration_mode_page.h"
 #include "pages/network_configuration_page.h"
+#include "pages/setting_page.h"
+#include "pages/network_status_page.h"
 
 namespace
 {
@@ -35,6 +37,12 @@ namespace
 
         case pages::PageId::CONFIGURATION_MODE:
             return &pages::configuration_mode_page;
+
+        case pages::PageId::SETTING:
+            return &pages::setting_page;
+
+        case pages::PageId::NETWORK_STATUS:
+            return &pages::network_status_page;
         }
         return &pages::landing_page;
     }
