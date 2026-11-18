@@ -14,24 +14,38 @@
 #define OLED_RESET -1       // No dedicated reset pin on most 0.96" I2C boards
 #define SCREEN_ADDRESS 0x3C // Most common address. Some modules use 0x3D.
 
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
-
-void scanI2C()
+namespace
 {
-  Serial.println(F("Scanning I2C bus..."));
-  byte found = 0;
-  for (byte addr = 1; addr < 127; addr++)
+  static Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+  void scanI2C()
   {
-    Wire.beginTransmission(addr);
-    if (Wire.endTransmission() == 0)
+    Serial.println(F("Scanning I2C bus..."));
+    byte found = 0;
+    for (byte addr = 1; addr < 127; addr++)
     {
-      Serial.printf("  Device found at 0x%02X\n", addr);
-      found++;
+      Wire.beginTransmission(addr);
+      if (Wire.endTransmission() == 0)
+      {
+        Serial.printf("  Device found at 0x%02X\n", addr);
+        found++;
+      }
+    }
+    if (found == 0)
+    {
+      Serial.println(F("  No I2C devices found. Check wiring/pull-ups."));
     }
   }
-  if (found == 0)
+}
+
+void mainTask(void *pv)
+{
+  Serial.printf("[RTOS] Core-%d - main task started", xPortGetCoreID());
+  for (;;)
   {
-    Serial.println(F("  No I2C devices found. Check wiring/pull-ups."));
+    network_manager::update_on_core_1(); // <-- was lora_manager::update()
+    network_manager::update_ap();        // update access point (when esp32 in access point mode)
+    page_manager::update();
   }
 }
 
@@ -59,20 +73,12 @@ void setup()
 
   sensor_manager::initialize();
   page_manager::initialize(display);
+  network_manager::initialize_on_core_1(); // this is non blocking
 
-  if (!network_manager::initialize())
-  { // <-- was lora_manager::initialize()
-    Serial.println(F("Network init failed — halting."));
-    while (true)
-    {
-      delay(10);
-    }
-  }
+  xTaskCreatePinnedToCore(mainTask, "MainTask", 4096, NULL, 1, NULL, 1);
 }
 
 void loop()
 {
-  network_manager::update(); // <-- was lora_manager::update()
-  network_manager::update_ap(); // update access point (when esp32 in access point mode)
-  page_manager::update();
+  vTaskDelete(NULL);
 }
