@@ -14,24 +14,56 @@
 #define OLED_RESET -1       // No dedicated reset pin on most 0.96" I2C boards
 #define SCREEN_ADDRESS 0x3C // Most common address. Some modules use 0x3D.
 
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+// ---- Task settings ----
+constexpr uint32_t TASK_STACK_BYTES = 8192; // Wi-Fi/MQTT/printf need more than 4096
+constexpr UBaseType_t TASK_PRIORITY = 1;
 
-void scanI2C()
+namespace
 {
-  Serial.println(F("Scanning I2C bus..."));
-  byte found = 0;
-  for (byte addr = 1; addr < 127; addr++)
+  static Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+  void scanI2C()
   {
-    Wire.beginTransmission(addr);
-    if (Wire.endTransmission() == 0)
+    Serial.println(F("Scanning I2C bus..."));
+    byte found = 0;
+    for (byte addr = 1; addr < 127; addr++)
     {
-      Serial.printf("  Device found at 0x%02X\n", addr);
-      found++;
+      Wire.beginTransmission(addr);
+      if (Wire.endTransmission() == 0)
+      {
+        Serial.printf("  Device found at 0x%02X\n", addr);
+        found++;
+      }
+    }
+    if (found == 0)
+    {
+      Serial.println(F("  No I2C devices found. Check wiring/pull-ups."));
     }
   }
-  if (found == 0)
+}
+
+// Core 1: LoRa receive, config web server, navigation and UI.
+void mainTask(void *pv)
+{
+  Serial.printf("[RTOS] Core-%d - main task started\n", xPortGetCoreID());
+  for (;;)
   {
-    Serial.println(F("  No I2C devices found. Check wiring/pull-ups."));
+    network_manager::update_on_core_1(); // LoRa (must only ever run on this core)
+    network_manager::update_ap();        // config web server (only does work in AP mode)
+    page_manager::update();
+    vTaskDelay(pdMS_TO_TICKS(1)); // yield so the idle task / watchdog can run
+  }
+}
+
+// Core 0: Wi-Fi + MQTT connect/reconnect (publish/receive later).
+void networkTask(void *pv)
+{
+  Serial.printf("[RTOS] Core-%d - network task started\n", xPortGetCoreID());
+  network_manager::initialize_on_core_0();
+  for (;;)
+  {
+    network_manager::update_on_core_0(); // was update_on_core_1(): LoRa was being driven from BOTH cores
+    vTaskDelay(pdMS_TO_TICKS(20));
   }
 }
 
@@ -59,20 +91,13 @@ void setup()
 
   sensor_manager::initialize();
   page_manager::initialize(display);
+  network_manager::initialize_on_core_1(); // LoRa init + creates the mutexes: must run before the tasks start
 
-  if (!network_manager::initialize())
-  { // <-- was lora_manager::initialize()
-    Serial.println(F("Network init failed — halting."));
-    while (true)
-    {
-      delay(10);
-    }
-  }
+  xTaskCreatePinnedToCore(networkTask, "NetworkTask", TASK_STACK_BYTES, NULL, TASK_PRIORITY, NULL, 0);
+  xTaskCreatePinnedToCore(mainTask, "MainTask", TASK_STACK_BYTES, NULL, TASK_PRIORITY, NULL, 1);
 }
 
 void loop()
 {
-  network_manager::update(); // <-- was lora_manager::update()
-  network_manager::update_ap(); // update access point (when esp32 in access point mode)
-  page_manager::update();
+  vTaskDelete(NULL);
 }

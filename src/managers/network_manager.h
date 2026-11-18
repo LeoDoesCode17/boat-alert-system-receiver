@@ -5,30 +5,37 @@
 
 namespace network_manager
 {
+    // ---- Lifecycle ------------------------------------------------------------
+    // Core 1 = LoRa (called from setup() and mainTask).
+    // Core 0 = Wi-Fi + MQTT (called from networkTask).
+    // initialize_on_core_1() must run before the tasks start: it creates the mutexes.
+    bool initialize_on_core_1();
+    bool initialize_on_core_0();
 
-    // Initializes all network subsystems (LoRa now; WiFi/MQTT later).
-    // Returns false if any critical subsystem fails to init.
-    bool initialize();
+    void update_on_core_0(); // Non-blocking-ish: drives Wi-Fi + MQTT connect/reconnect
+    void update_on_core_1(); // Drives LoRa receive. Call ONLY from the core-1 task.
 
-    // Call every loop(). Drives all network subsystems' non-blocking updates.
-    void update();
-
-    // --- LoRa passthrough ---
-    // Keeps callers decoupled from networks/lora.h internals.
+    // ---- LoRa passthrough -------------------------------------------------------
     const lora::TelemetryPacket &getLatestTelemetry();
     bool isLoraSignalLost(unsigned long timeoutMs = 5000);
 
-    // for configure network creds using web page
-    bool start_ap();                   // Turn on AP + web server. Returns false if the AP failed to start
-    void stop_ap();                    // Turn off web server + AP (safe to call even if not running)
-    void update_ap();                  // Must be called from loop(): lets the web server serve clients
+    // ---- Connectivity status (safe to call from any task / core) -----------------
+    bool isWifiConnected(); // Wi-Fi station is connected to the configured network
+    bool isMqttConnected(); // MQTT session with the configured broker is up
+    bool isOnline();        // Wi-Fi AND MQTT both up
+
+    // ---- Configuration mode: set credentials through a web page -------------------
+    bool start_ap();                // Turn on AP + web server. Returns false if the AP failed to start.
+                                    // While the AP is on, Wi-Fi/MQTT are suspended; they resume after stop_ap().
+    void stop_ap();                 // Turn off web server + AP (safe to call even if not running)
+    void update_ap();               // Call from the core-1 task: lets the web server serve clients
     bool isActive();                // true while configuration mode is running
     bool hasSubmittedCredentials(); // true after the user submitted the web form
-    String getApSsid();             // Name of the Wi-Fi network the ESP32 creates (for the LCD guide)
-    String getApPassword();         // Password of that network (for the LCD guide)
-    String getApIp();               // IP address of the web page (for the LCD guide)
+    String getApSsid();             // Name of the Wi-Fi network the ESP32 creates (for the UI guide)
+    String getApPassword();         // Password of that network (for the UI guide)
+    String getApIp();               // IP address of the web page (for the UI guide)
 
-    WifiConfig getWifiConfig(); // Everything received for Wi-Fi (replaces getReceivedSsid)
-    MqttConfig getMqttConfig(); // Everything received for the MQTT broker
+    WifiConfig getWifiConfig(); // Copy of the current Wi-Fi settings (thread-safe)
+    MqttConfig getMqttConfig(); // Copy of the current MQTT settings (thread-safe)
 
 } // namespace network_manager
