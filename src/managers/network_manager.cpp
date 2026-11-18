@@ -136,32 +136,38 @@ namespace
 
 namespace network_manager
 {
-
-    bool initialize()
+    bool initialize_on_core_1()
     {
         bool ok = true;
 
         if (!lora::initialize())
         {
-            Serial.println(F("[network_manager] LoRa init failed."));
+            Serial.println(F("[NETWORK-MANAGER] LoRa init failed."));
             ok = false;
         }
 
-        // read the nvs to get saved network config
-        nvs_manager::read_network_config(receivedWifi, receivedMqtt);
-
-        // Future: wifi::initialize(), mqtt::initialize() go here.
-        // Decide whether their failure should also flip `ok` to false,
-        // or just be logged as non-critical, depending on your app's needs.
+        if (!ok)
+        {
+            Serial.println("[NETWORK-MANAGER] Initialize network on core 1 failed");
+        }
 
         return ok;
     }
 
-    void update()
+    bool initialize_on_core_0()
+    {
+        bool ok = true;
+        nvs_manager::read_network_config(receivedWifi, receivedMqtt);
+        return ok;
+    }
+
+    void update_on_core_0()
+    {
+    }
+
+    void update_on_core_1()
     {
         lora::update();
-
-        // Future: wifi::update(), mqtt::update() go here.
     }
 
     const lora::TelemetryPacket &getLatestTelemetry()

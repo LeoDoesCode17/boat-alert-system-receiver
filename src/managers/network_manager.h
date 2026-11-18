@@ -8,10 +8,14 @@ namespace network_manager
 
     // Initializes all network subsystems (LoRa now; WiFi/MQTT later).
     // Returns false if any critical subsystem fails to init.
-    bool initialize();
+    bool initialize_on_core_1();
+
+    bool initialize_on_core_0();
 
     // Call every loop(). Drives all network subsystems' non-blocking updates.
-    void update();
+
+    void update_on_core_0();
+    void update_on_core_1();
 
     // --- LoRa passthrough ---
     // Keeps callers decoupled from networks/lora.h internals.
