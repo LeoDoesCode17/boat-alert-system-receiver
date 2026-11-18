@@ -1,6 +1,7 @@
 #include "managers/network_manager.h"
 #include <WiFi.h>
 #include <WebServer.h>
+#include "nvs_manager.h"
 
 namespace
 {
@@ -125,8 +126,10 @@ namespace
         submitted = true; // Tell the UI that the form was submitted
 
         // Reply to the browser so the user knows it worked
-        server.send(200, "text/html",
-                    "<h2>Configuration received!</h2><p>You can close this page.</p>");
+        server.send(200, "text/html", "<h2>Configuration received!</h2><p>You can close this page.</p>");
+
+        // store the new network (wifi and mqtt) configuration to nvs
+        nvs_manager::store_network_config(receivedWifi, receivedMqtt);
     }
 
 }
@@ -143,6 +146,9 @@ namespace network_manager
             Serial.println(F("[network_manager] LoRa init failed."));
             ok = false;
         }
+
+        // read the nvs to get saved network config
+        nvs_manager::read_network_config(receivedWifi, receivedMqtt);
 
         // Future: wifi::initialize(), mqtt::initialize() go here.
         // Decide whether their failure should also flip `ok` to false,
