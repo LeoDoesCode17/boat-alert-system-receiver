@@ -10,5 +10,7 @@ namespace pages
         TEMPLATE,
         NETWORK_CONFIGURATION,
         CONFIGURATION_MODE,
+        SETTING,
+        NETWORK_STATUS,
     };
 }

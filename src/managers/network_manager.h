@@ -1,5 +1,6 @@
 #pragma once
 #include <Arduino.h>
+#include <IPAddress.h>
 #include "networks/lora.h"
 #include "core/type.h"
 
@@ -23,6 +24,7 @@ namespace network_manager
     bool isWifiConnected(); // Wi-Fi station is connected to the configured network
     bool isMqttConnected(); // MQTT session with the configured broker is up
     bool isOnline();        // Wi-Fi AND MQTT both up
+    IPAddress getLocalIp(); // Station IP address, 0.0.0.0 while Wi-Fi is not connected
 
     // ---- Configuration mode: set credentials through a web page -------------------
     bool start_ap();                // Turn on AP + web server. Returns false if the AP failed to start.

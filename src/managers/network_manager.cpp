@@ -50,6 +50,7 @@ namespace
     std::atomic<uint32_t> configVersion{0}; // Bumped whenever the stored credentials change
     std::atomic<bool> wifiUp{false};        // Published by core 0, read by anyone
     std::atomic<bool> mqttUp{false};
+    std::atomic<uint32_t> staIp{0}; // Station IP (0 = none), published by core 0 together with wifiUp
 
     WifiConfig receivedWifi; // Always access through cfgMutex
     MqttConfig receivedMqtt;
@@ -227,6 +228,8 @@ namespace
     {
         wifiUp = wifi;
         mqttUp = mqtt;
+        if (!wifi)
+            staIp = 0;
     }
 
     // Closes the MQTT session and the TCP socket (does not touch the Wi-Fi radio).
@@ -251,7 +254,7 @@ namespace
     }
 
     // Config mode owns the radio: drop everything and wait. Cheap when already idle.
-    // this will be called from task pinned on core 0? 
+    // this will be called from task pinned on core 0?
     void suspendConnectivity()
     {
         if (wifiState != WifiState::Disconnected || wifiUp || mqttUp)
@@ -277,7 +280,7 @@ namespace
             if (!reached(now, wifiNextAttempt))
                 return;
 
-                // why need new branch? to make the lock goes out of scope to trigger destructor
+            // why need new branch? to make the lock goes out of scope to trigger destructor
             {
                 Lock lock(radioMutex);
                 if (active) // AP got started in the meantime: leave the radio alone
@@ -297,6 +300,7 @@ namespace
             {
                 wifiState = WifiState::Connected;
                 wifiBackoff = WIFI_BACKOFF_MIN_MS;
+                staIp = static_cast<uint32_t>(WiFi.localIP()); // set before wifiUp so readers never see "connected" without an IP
                 wifiUp = true;
                 Serial.printf("[NETWORK-MANAGER] Wi-Fi connected, IP %s\n", WiFi.localIP().toString().c_str());
             }
@@ -577,6 +581,7 @@ namespace network_manager
     String getApSsid() { return String(AP_SSID); }
     String getApPassword() { return String(AP_PASSWORD); }
     String getApIp() { return WiFi.softAPIP().toString(); }
+    IPAddress getLocalIp() { return IPAddress(staIp.load()); }
 
     WifiConfig getWifiConfig()
     {
